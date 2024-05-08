@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "mininb"
+  site-url: "https://AnswerDotAI.github.io/mininb"
+  description: "A tiny notebook experiment"
+  repo-branch: main
+  repo-url: "https://github.com/AnswerDotAI/mininb"
