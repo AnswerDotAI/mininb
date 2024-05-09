@@ -2,6 +2,7 @@ import types, xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from functools import partial
 from litestar import MediaType, Litestar, get, post, put
+from litestar.static_files import create_static_files_router
 from litestar.exceptions import NotFoundException
 
 def _attrmap(o):
@@ -82,4 +83,9 @@ async def get_list(done: bool|None = None) -> str:
     res = Html(Head(*head), Body(*elems))
     return to_xml(res)
 
-app = Litestar([get_list, add_item, update_item, get_todo_by_id])
+app = Litestar(
+    route_handlers=[
+        create_static_files_router(path="/static", directories=["static"]),
+        get_list, add_item, update_item, get_todo_by_id
+    ]
+)
