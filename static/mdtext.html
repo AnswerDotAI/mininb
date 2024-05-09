@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Marked.js Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</head>
+<body>
+  <div id="content">
+    <div class="markdown">
+# Heading 1
+
+This is some **bold** and *italicized* text.
+
+- List item 1
+- List item 2
+
+```python
+for o in foo: print("Hi " + o)
+```
+    </div>
+    <div>This is not a markdown block, so it won't be rendered.</div>
+  </div>
+
+  <script>
+  const contentDiv = document.getElementById('content');
+  const renderMarkdown = (block) => { block.innerHTML = marked.parse(block.innerHTML) };
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('markdown'))
+          renderMarkdown(node);
+        });
+      }
+    });
+  });
+  observer.observe(contentDiv, { childList: true, subtree: true });
+  contentDiv.querySelectorAll('.markdown').forEach(renderMarkdown);
+  </script>
+</body>
+</html>
