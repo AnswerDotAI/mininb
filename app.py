@@ -78,12 +78,7 @@ async def add_item(request):
     new_id = str(len(TODO_LIST) + 1)
     new_item = TodoItem(id=new_id, title=data['title'], done=False)
     TODO_LIST.append(new_item)
-    return (Li(A(new_item.title, href='#',
-                hx_get=f'/todos/{new_item.id}', hx_target="#current-todo",
-                hx_on__after_request="console.log('Done making a request!')", 
-                hx_on__before_request="console.log('Making a request!')"),
-             id=f'todo-{new_item.id}'), # << This gets added to the list
-             Div(new_todo_form(), hx_swap_oob='true', id='new-todo-form')) # << Reset the form
+    return (new_item, mk_input(hx_swap_oob='true'))
 
 @rt("/{item_id}", 'PUT')
 async def update_item(request):
@@ -114,9 +109,12 @@ async def get_todo_by_id(request):
                  hx_target=f"#todo-{todo.id}", hx_swap="outerHTML")
     return Div(Div(todo.title), btn, id='todo-details')
 
-def new_todo_form():
-    return Form(
-        Input(type="text", name="title", placeholder="New Todo"),
+def mk_input(**kw): return Input(type="text", name="title", placeholder="New Todo", id="new-todo-title", **kw)
+
+@rt("/")
+async def get_todos(request):
+    form = Form(
+        mk_input(),
         Button("Add Todo", type="submit"),
         method="post",
         hx_post="/",
@@ -124,10 +122,6 @@ def new_todo_form():
         hx_swap="beforeend",
         id="new-todo-form",
     )
-
-@rt("/")
-async def get_todos(request):
-    form = new_todo_form()
     elems = H1('Todo list'), form, Ul(*TODO_LIST, id="todo-list"), Div(id='current-todo')
     return (Title('TODO list'), Body(Main(*elems, cls='container')))
 
