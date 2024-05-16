@@ -75,38 +75,41 @@ picocss = Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pic
 
 rt = Router(headtags=[htmxscr, picocss])
 
-@rt("/favicon.ico")
-async def favicon(request): return FileResponse('favicon.ico', media_type='image/x-icon')
-
+""" XXX: TODO
 @rt("/", 'POST')
-async def add_item(data: TodoItem):
+async def add_item(request):
     TODO_LIST.append(data)
 
-@rt("/{item_title:str}", 'PUT')
-async def update_item(item_title: str, data: TodoItem):
+@rt("/{item_title}", 'PUT')
+async def update_item(request):
     todo_item = get_todo_by_title(item_title)
     todo_item.title = data.title
     todo_item.done = data.done
+"""
 
-@rt("/todos/{todoid}", 'DELETE')
+@rt("/favicon.ico")
+async def favicon(request): return FileResponse('favicon.ico', media_type='image/x-icon')
+
+def find_todo(tid):
+    try: return next(o for o in TODO_LIST if o.id==tid)
+    except: raise NotFoundException() from None
+
+@rt("/todos/{tid}", 'DELETE')
 async def del_todo(request):
-    todoid = request.path_params['todoid']
-    TODO_LIST.remove(next(o for o in TODO_LIST if o.id == todoid))
+    todo = find_todo(request.path_params['tid'])
+    TODO_LIST.remove(todo)
     return Div(hx_swap_oob='true', id='todo-details')
 
-@rt("/todos/{todoid}")
+@rt("/todos/{tid}")
 async def get_todo_by_id(request):
-    todoid = request.path_params['todoid']
-    try: todo = next(o for o in TODO_LIST if o.id == todoid)
-    except: raise NotFoundException() from None
+    todo = find_todo(request.path_params['tid'])
     btn = Button('delete', hx_delete=f'/todos/{todo.id}',
-                 hx_target=f"#todo-{todo.id}",
-                 hx_swap="outerHTML")
+                 hx_target=f"#todo-{todo.id}", hx_swap="outerHTML")
     return Div(Div(todo.title), btn, id='todo-details')
 
 @rt("/")
 async def get_todos(request):
-    main = Main(H1('Todo list'), Ul(*TODO_LIST), Div(id='current-todo'), cls='container')
-    return (Title('TODO list'), Body(main))
+    elems = H1('Todo list'), Ul(*TODO_LIST), Div(id='current-todo')
+    return (Title('TODO list'), Body(Main(*elems, cls='container')))
 
 app = Starlette(debug=True, routes=rt.routes, exception_handlers=exception_handlers)
