@@ -75,17 +75,27 @@ picocss = Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pic
 
 rt = Router(headtags=[htmxscr, picocss])
 
-""" XXX: TODO
 @rt("/", 'POST')
 async def add_item(request):
-    TODO_LIST.append(data)
+    data = await request.form()
+    new_id = str(len(TODO_LIST) + 1)
+    new_item = TodoItem(id=new_id, title=data['title'], done=False)
+    TODO_LIST.append(new_item)
+    return (Li(A(new_item.title, href='#',
+                hx_get=f'/todos/{new_item.id}', hx_target="#current-todo",
+                hx_on__after_request="console.log('Done making a request!')", 
+                hx_on__before_request="console.log('Making a request!')"),
+             id=f'todo-{new_item.id}'), # << This gets added to the list
+             Div(new_todo_form(), hx_swap_oob='true', id='new-todo-form')) # << Reset the form
 
-@rt("/{item_title}", 'PUT')
+@rt("/{item_id}", 'PUT')
 async def update_item(request):
-    todo_item = get_todo_by_title(item_title)
-    todo_item.title = data.title
-    todo_item.done = data.done
-"""
+    data = await request.json()
+    item_id = request.path_params['item_id']
+    todo_item = find_todo(item_id)
+    todo_item.title = data['title']
+    todo_item.done = data['done']
+    return RedirectResponse("/", status_code=303)
 
 @rt("/favicon.ico")
 async def favicon(request): return FileResponse('favicon.ico', media_type='image/x-icon')
@@ -107,9 +117,21 @@ async def get_todo_by_id(request):
                  hx_target=f"#todo-{todo.id}", hx_swap="outerHTML")
     return Div(Div(todo.title), btn, id='todo-details')
 
+def new_todo_form():
+    return Form(
+        Input(type="text", name="title", placeholder="New Todo"),
+        Button("Add Todo", type="submit"),
+        method="post",
+        hx_post="/",
+        hx_target="#todo-list",
+        hx_swap="beforeend",
+        id="new-todo-form",
+    )
+
 @rt("/")
 async def get_todos(request):
-    elems = H1('Todo list'), Ul(*TODO_LIST), Div(id='current-todo')
+    form = new_todo_form()
+    elems = H1('Todo list'), form, Ul(*TODO_LIST, id="todo-list"), Div(id='current-todo')
     return (Title('TODO list'), Body(Main(*elems, cls='container')))
 
 app = Starlette(debug=True, routes=rt.routes, exception_handlers=exception_handlers)
