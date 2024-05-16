@@ -75,8 +75,8 @@ picocss = Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pic
 
 rt = Router(headtags=[htmxscr, picocss])
 
-def todo_body():
-    return Body(Main(H1('Todo list'), Ul(*TODO_LIST), Div(id='current-todo'), cls='container'))
+@rt("/favicon.ico")
+async def favicon(request): return FileResponse('favicon.ico', media_type='image/x-icon')
 
 @rt("/", 'POST')
 async def add_item(data: TodoItem):
@@ -104,11 +104,9 @@ async def get_todo_by_id(request):
                  hx_swap="outerHTML")
     return Div(Div(todo.title), btn, id='todo-details')
 
-@rt("/favicon.ico")
-async def favicon(request): return FileResponse('favicon.ico', media_type='image/x-icon')
-
 @rt("/")
 async def get_todos(request):
-    return (Title('TODO list'), todo_body())
+    main = Main(H1('Todo list'), Ul(*TODO_LIST), Div(id='current-todo'), cls='container')
+    return (Title('TODO list'), Body(main))
 
 app = Starlette(debug=True, routes=rt.routes, exception_handlers=exception_handlers)
