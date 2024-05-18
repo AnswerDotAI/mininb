@@ -87,7 +87,7 @@ async def del_todo(id:int):
     return clr_details()
 
 @app.get("/todos/{id}")
-async def get_todo_by_id(id:int):
+async def get_todo(id:int):
     todo = find_todo(id)
     btn = Button('delete', hx_delete=f'/todos/{todo.id}',
                  hx_target=f"#todo-{todo.id}", hx_swap="outerHTML")
