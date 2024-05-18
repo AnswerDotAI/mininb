@@ -33,6 +33,10 @@ async def image(fname:str, ext:str): return FileResponse(f'{fname}.{ext}')
 @app.get("/static/{fname:path}")
 async def static(fname:str): return FileResponse(f'static/{fname}')
 
+currtodo = 'current-todo'
+
+def mk_input(**kw): return Input(type="text", name="title", placeholder="New Todo", id="new-title", **kw)
+
 @app.post("/")
 async def add_item(todo:TodoItem):
     todo.id = len(TODO_LIST)+1
@@ -43,7 +47,7 @@ def find_todo(id):
     try: return next(o for o in TODO_LIST if o.id==id)
     except: raise NotFoundException(f'Todo #{id}') from None
 
-def clr_details(): return Div(hx_swap_oob='innerHTML', id='current-todo')
+def clr_details(): return Div(hx_swap_oob='innerHTML', id=currtodo)
 
 @app.get("/edit/{id}")
 async def edit_item(id:int):
@@ -68,10 +72,6 @@ async def get_todo(id:int):
     btn = Button('delete', hx_delete=f'/todos/{todo.id}',
                  hx_target=f"#todo-{todo.id}", hx_swap="outerHTML")
     return Div(Div(todo.title), btn, id='details')
-
-def mk_input(**kw): return Input(type="text", name="title", placeholder="New Todo", id="new-title", **kw)
-
-currtodo = 'current-todo'
 
 @patch
 def __xt__(self:TodoItem):
