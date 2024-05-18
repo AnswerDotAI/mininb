@@ -74,7 +74,7 @@ async def edit_item(id:int):
     form = Form(Fieldset(Input(id="title"), Button("Save"), role="group"),
                 Hidden(id="id"), Checkbox(id="done", label='Done'),
                 hx_put="/", hx_target=f"#todo-{id}", id="edit")
-    return fill_form(Article(form), find_todo(id))
+    return fill_form(form, find_todo(id))
 
 @app.put("/")
 async def update(todo: TodoItem):
@@ -97,11 +97,15 @@ def mk_input(**kw): return Input(type="text", name="title", placeholder="New Tod
 
 @app.get("/")
 async def get_todos(req):
-    form = Form(Fieldset(mk_input(), Button("Add"), role="group"),
-                method="post", id="new-todo",
-                hx_post="/", hx_target="#todo-list", hx_swap="beforeend")
-    todo_ul = Ul(*TODO_LIST, id="todo-list")
+    inp = Fieldset(mk_input(), Button("Add"), role="group")
+    add = Form(inp, method="post", id="new-todo",
+               hx_post="/", hx_target="#todo-list", hx_swap="beforeend")
+    content = Article(
+        Header(add),
+        Ul(*TODO_LIST, id="todo-list"),
+        Footer(id='current-todo')
+    )
     return Html(
         Head(Title('TODO list'), htmxscr, picocss, mycss),
-        Body(Main(H1('Todo list'), form, todo_ul, Div(id='current-todo'),
-                  cls='container'), style="max-width: 60rem; margin: 0 auto;"))
+        Body(Main(H1('Todo list'), content, cls='container'))
+    )

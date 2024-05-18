@@ -1,3 +1,8 @@
+body {
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
 @media (min-width: 576px) {
   :root { --pico-font-size: 100%; }
 }
