@@ -98,8 +98,8 @@ def mk_input(**kw): return Input(type="text", name="title", placeholder="New Tod
 @app.get("/")
 async def get_todos(req):
     inp = Fieldset(mk_input(), Button("Add"), role="group")
-    add = Form(inp, method="post", id="new-todo",
-               hx_post="/", hx_target="#todo-list", hx_swap="beforeend")
+    add = Form(inp, id="new-todo", hx_post="/",
+               hx_target="#todo-list", hx_swap="beforeend")
     content = Article(
         Header(add),
         Ul(*TODO_LIST, id="todo-list"),
