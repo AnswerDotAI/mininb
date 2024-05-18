@@ -71,10 +71,12 @@ async def get_todo(id:int):
 
 def mk_input(**kw): return Input(type="text", name="title", placeholder="New Todo", id="new-title", **kw)
 
+currtodo = 'current-todo'
+
 @patch
 def __xt__(self:TodoItem):
-    show = A(self.title, href='#', hx_get=f'/todos/{self.id}', hx_target="#current-todo")
-    edit = A('edit', href='#', hx_get=f'/edit/{self.id}', hx_target="#current-todo")
+    show = A(self.title, f'/todos/{self.id}', currtodo)
+    edit = A('edit', f'/edit/{self.id}', currtodo)
     dt = ' (done)' if self.done else ''
     return Li(show, dt, ' | ', edit, id=f'todo-{self.id}')
 
@@ -86,7 +88,7 @@ async def get_todos(req):
     content = Article(
         Header(add),
         Ul(*TODO_LIST, id="todo-list"),
-        Footer(id='current-todo'))
+        Footer(id=currtodo))
     return Html(
         Head(Title('TODO list'), htmxscr, picocss, mycss),
         Body(Main(H1('Todo list'), content, cls='container')))
