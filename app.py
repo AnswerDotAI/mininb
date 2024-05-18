@@ -6,33 +6,9 @@ from fastcore.utils import *
 from fastcore.xml import *
 from fasthtml import *
 
-"""
-class NotFoundException(HTTPException):
-    def __init__(self): return super().__init__(404)
-
-async def not_found(request: Request, exc: NotFoundException):
-    return HTMLResponse(content='not found', status_code=exc.status_code)
-
-exception_handlers = { NotFoundException: not_found }
-
-rt = Router(headtags=[htmxscr, picocss])
-
-def wrap_root(resp, headtags):
-    title = Title('Page')
-    if isinstance(resp, tuple): title,resp = resp
-    return Html(Head(title, *headtags), resp)
-"""
-
 @dataclass
 class TodoItem:
     title: str; id: int = -1; done: bool = False
-    def __xt__(self):
-        show = A(self.title, href='#',
-                hx_get=f'/todos/{self.id}', hx_target="#current-todo")
-        edit = A('edit', href='#',
-                hx_get=f'/edit/{self.id}', hx_target="#current-todo")
-        dt = ' (done)' if self.done else ''
-        return Li(show, dt, ' | ', edit, id=f'todo-{self.id}')
 
 TODO_LIST = [
     TodoItem(id=0, title="Start writing todo list", done=True),
@@ -95,6 +71,13 @@ async def get_todo(id:int):
 
 def mk_input(**kw): return Input(type="text", name="title", placeholder="New Todo", id="new-title", **kw)
 
+@patch
+def __xt__(self:TodoItem):
+    show = A(self.title, href='#', hx_get=f'/todos/{self.id}', hx_target="#current-todo")
+    edit = A('edit', href='#', hx_get=f'/edit/{self.id}', hx_target="#current-todo")
+    dt = ' (done)' if self.done else ''
+    return Li(show, dt, ' | ', edit, id=f'todo-{self.id}')
+
 @app.get("/")
 async def get_todos(req):
     inp = Fieldset(mk_input(), Button("Add"), role="group")
@@ -103,9 +86,7 @@ async def get_todos(req):
     content = Article(
         Header(add),
         Ul(*TODO_LIST, id="todo-list"),
-        Footer(id='current-todo')
-    )
+        Footer(id='current-todo'))
     return Html(
         Head(Title('TODO list'), htmxscr, picocss, mycss),
-        Body(Main(H1('Todo list'), content, cls='container'))
-    )
+        Body(Main(H1('Todo list'), content, cls='container')))
