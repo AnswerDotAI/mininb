@@ -19,7 +19,6 @@ TODO_LIST = [
 htmxscr = Script(
     src="https://unpkg.com/htmx.org@1.9.12", crossorigin="anonymous",
     integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2")
-picocss = Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@latest/css/pico.min.css")
 mycss   = Link(rel="stylesheet", href="picovars.css")
 
 # debug=True, exception_handlers=exception_handlers
@@ -33,7 +32,9 @@ async def image(fname:str, ext:str): return FileResponse(f'{fname}.{ext}')
 @app.get("/static/{fname:path}")
 async def static(fname:str): return FileResponse(f'static/{fname}')
 
-currtodo = 'current-todo'
+id_curr = 'current-todo'
+id_list = 'todo-list'
+def tid(id): return f'todo-{id}'
 
 def mk_input(**kw): return Input(type="text", name="title", placeholder="New Todo", id="new-title", **kw)
 
@@ -47,13 +48,13 @@ def find_todo(id):
     try: return next(o for o in TODO_LIST if o.id==id)
     except: raise NotFoundException(f'Todo #{id}') from None
 
-def clr_details(): return Div(hx_swap_oob='innerHTML', id=currtodo)
+def clr_details(): return Div(hx_swap_oob='innerHTML', id=id_curr)
 
 @app.get("/edit/{id}")
 async def edit_item(id:int):
-    form = Form(Fieldset(Input(id="title"), Button("Save"), role="group"),
+    form = Form(Group(Input(id="title"), Button("Save")),
                 Hidden(id="id"), Checkbox(id="done", label='Done'),
-                hx_put="/", hx_target=f"#todo-{id}", id="edit")
+                hx_put="/", target_id=tid(id), id="edit")
     return fill_form(form, find_todo(id))
 
 @app.put("/")
@@ -70,25 +71,24 @@ async def del_todo(id:int):
 async def get_todo(id:int):
     todo = find_todo(id)
     btn = Button('delete', hx_delete=f'/todos/{todo.id}',
-                 hx_target=f"#todo-{todo.id}", hx_swap="outerHTML")
+                 target_id=tid(todo.id), hx_swap="outerHTML")
     return Div(Div(todo.title), btn, id='details')
 
 @patch
 def __xt__(self:TodoItem):
-    show = A(self.title, f'/todos/{self.id}', currtodo)
-    edit = A('edit', f'/edit/{self.id}', currtodo)
+    show = AX(self.title, f'/todos/{self.id}', id_curr)
+    edit = AX('edit',     f'/edit/{self.id}' , id_curr)
     dt = ' (done)' if self.done else ''
-    return Li(show, dt, ' | ', edit, id=f'todo-{self.id}')
+    return Li(show, dt, ' | ', edit, id=tid(self.id))
 
 @app.get("/")
 async def get_todos(req):
-    inp = Fieldset(mk_input(), Button("Add"), role="group")
+    inp = Group(mk_input(), Button("Add"))
     add = Form(inp, id="new-todo", hx_post="/",
-               hx_target="#todo-list", hx_swap="beforeend")
-    content = Article(
-        Header(add),
-        Ul(*TODO_LIST, id="todo-list"),
-        Footer(id=currtodo))
+               target_id=id_list, hx_swap="beforeend")
+    content = Card(
+        Ul(*TODO_LIST, id=id_list),
+        header=add, footer=Div(id=id_curr))
     return Html(
-        Head(Title('TODO list'), htmxscr, picocss, mycss),
+        Head(Title('TODO list'), htmxscr, picolink, mycss),
         Body(Main(H1('Todo list'), content, cls='container')))
