@@ -6,29 +6,26 @@ from fastcore.utils import *
 from fastcore.xml import *
 from fasthtml import *
 
+htmxscr = Script(
+    src="https://unpkg.com/htmx.org@1.9.12", crossorigin="anonymous",
+    integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2")
+mycss = Link(rel="stylesheet", href="picovars.css")
+
+# debug=True, exception_handlers=exception_handlers
+
 @dataclass
 class TodoItem:
     title: str; id: int = -1; done: bool = False
 
-TODO_LIST = [
-    TodoItem(id=0, title="Start writing todo list", done=True),
-    TodoItem(id=1, title="???", done=False),
-    TodoItem(id=2, title="Profit", done=False),
-]
+TODO_LIST = [TodoItem(id=0, title="Start writing todo list", done=True),
+             TodoItem(id=1, title="???", done=False),
+             TodoItem(id=2, title="Profit", done=False)]
 
-htmxscr = Script(
-    src="https://unpkg.com/htmx.org@1.9.12", crossorigin="anonymous",
-    integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2")
-mycss   = Link(rel="stylesheet", href="picovars.css")
-
-# debug=True, exception_handlers=exception_handlers
 app = FastHTML()
 
 reg_re_param("static", "ico|gif|jpg|jpeg|webm|css|js")
-
 @app.get("/{fname:path}.{ext:static}")
 async def image(fname:str, ext:str): return FileResponse(f'{fname}.{ext}')
-
 @app.get("/static/{fname:path}")
 async def static(fname:str): return FileResponse(f'static/{fname}')
 
@@ -36,7 +33,7 @@ id_curr = 'current-todo'
 id_list = 'todo-list'
 def tid(id): return f'todo-{id}'
 
-def mk_input(**kw): return Input(type="text", name="title", placeholder="New Todo", id="new-title", **kw)
+def mk_input(**kw): return Input(name="title", placeholder="New Todo", **kw)
 
 @app.post("/")
 async def add_item(todo:TodoItem):
@@ -72,7 +69,7 @@ async def get_todo(id:int):
     todo = find_todo(id)
     btn = Button('delete', hx_delete=f'/todos/{todo.id}',
                  target_id=tid(todo.id), hx_swap="outerHTML")
-    return Div(Div(todo.title), btn, id='details')
+    return Div(Div(todo.title), btn)
 
 @patch
 def __xt__(self:TodoItem):
@@ -84,8 +81,7 @@ def __xt__(self:TodoItem):
 @app.get("/")
 async def get_todos(req):
     inp = Group(mk_input(), Button("Add"))
-    add = Form(inp, id="new-todo", hx_post="/",
-               target_id=id_list, hx_swap="beforeend")
+    add = Form(inp, hx_post="/", target_id=id_list, hx_swap="beforeend")
     content = Card(
         Ul(*TODO_LIST, id=id_list),
         header=add, footer=Div(id=id_curr))
